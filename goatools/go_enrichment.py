@@ -291,7 +291,7 @@ class GOEnrichmentStudy(object):
         """Run Gene Ontology Enrichment Study (GOEA) on study ids."""
 
         study_name = kws.get('name', 'current')
-        if kws.get('quiet'):
+        if not kws.get('quiet'):
             print('\nRun {OBJNAME} Gene Ontology Analysis: {STU} study set of {N} IDs ...'.format(
                 OBJNAME=self.name, N=len(study), STU=study_name))
         if not study:
