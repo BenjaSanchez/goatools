@@ -34,6 +34,7 @@ from goatools.rpt.goea_nt_xfrm import MgrNtGOEAs
 from goatools.rpt.prtfmt import PrtFmt
 # from goatools.goea.results import GoeaResults
 
+
 class GOEnrichmentRecord(object):
     """Represents one result (from a single GOTerm) in the GOEnrichmentStudy
     """
@@ -54,7 +55,8 @@ class GOEnrichmentRecord(object):
         "depth",
         "study_count",
         "study_items"]
-    _fldsdeffmt = ["%s"]*3 + ["%-30s"] + ["%d/%d"] * 2 + ["%.3g"] + ["%d"] * 2 + ["%15s"]
+    _fldsdeffmt = ["%s"]*3 + ["%-30s"] + ["%d/%d"] * \
+        2 + ["%.3g"] + ["%d"] * 2 + ["%15s"]
 
     _flds = set(_fldsdefprt).intersection(
         set(['study_items', 'study_count', 'study_n', 'pop_items', 'pop_count', 'pop_n']))
@@ -99,9 +101,11 @@ class GOEnrichmentRecord(object):
     def __str__(self, indent=False):
         field_data = [getattr(self, f, "n.a.") for f in self._fldsdefprt[:-1]] + \
                      [getattr(self, "p_{}".format(m.fieldname)) for m in self.method_flds] + \
-                     [", ".join(str(e) for e in sorted(getattr(self, self._fldsdefprt[-1], set())))]
+                     [", ".join(str(e) for e in sorted(
+                         getattr(self, self._fldsdefprt[-1], set())))]
         fldsdeffmt = self._fldsdeffmt
-        field_formatter = fldsdeffmt[:-1] + ["%.3g"]*len(self.method_flds) + [fldsdeffmt[-1]]
+        field_formatter = fldsdeffmt[:-1] + ["%.3g"] * \
+            len(self.method_flds) + [fldsdeffmt[-1]]
         self._chk_fields(field_data, field_formatter)
 
         # default formatting only works for non-"n.a" data
@@ -111,7 +115,8 @@ class GOEnrichmentRecord(object):
 
         # print dots to show the level of the term
         dots = self.get_indent_dots() if indent else ""
-        prtdata = "\t".join(a % b for (a, b) in zip(field_formatter, field_data))
+        prtdata = "\t".join(a % b for (a, b) in zip(
+            field_formatter, field_data))
         return "".join([dots, prtdata])
 
     def get_indent_dots(self):
@@ -155,19 +160,20 @@ class GOEnrichmentRecord(object):
         self.is_ratio_different = is_ratio_different(min_ratio, self.study_count,
                                                      self.study_n, self.pop_count, self.pop_n)
 
-
     # -------------------------------------------------------------------------------------
     # Methods for getting flat namedtuple values from GOEnrichmentRecord object
+
     def get_prtflds_default(self):
         """Get default fields."""
         return self._fldsdefprt[:-1] + \
-               ["p_{M}".format(M=m.fieldname) for m in self.method_flds] + \
-               [self._fldsdefprt[-1]]
+            ["p_{M}".format(M=m.fieldname) for m in self.method_flds] + \
+            [self._fldsdefprt[-1]]
 
     def get_prtflds_all(self):
         """When converting to a namedtuple, get all possible fields in their original order."""
         flds = []
-        dont_add = set(['_parents', 'method_flds', 'relationship_rev', 'relationship'])
+        dont_add = set(['_parents', 'method_flds',
+                        'relationship_rev', 'relationship'])
         # Fields: GO NS enrichment name ratio_in_study ratio_in_pop p_uncorrected
         #         depth study_count p_sm_bonferroni p_fdr_bh study_items
         self._flds_append(flds, self.get_prtflds_default(), dont_add)
@@ -210,8 +216,8 @@ class GOEnrichmentRecord(object):
                     self._err_fld(fld, fldnames)
             if rpt_fmt:
                 assert not isinstance(val, list), \
-                   "UNEXPECTED LIST: FIELD({F}) VALUE({V}) FMT({P})".format(
-                       P=rpt_fmt, F=fld, V=val)
+                    "UNEXPECTED LIST: FIELD({F}) VALUE({V}) FMT({P})".format(
+                    P=rpt_fmt, F=fld, V=val)
         return row
 
     @staticmethod
@@ -228,11 +234,14 @@ class GOEnrichmentRecord(object):
     def _err_fld(self, fld, fldnames):
         """Unrecognized field. Print detailed Failure message."""
         msg = ['ERROR. UNRECOGNIZED FIELD({F})'.format(F=fld)]
-        actual_flds = set(self.get_prtflds_default() + self.goterm.__dict__.keys())
+        actual_flds = set(self.get_prtflds_default() +
+                          self.goterm.__dict__.keys())
         bad_flds = set(fldnames).difference(set(actual_flds))
         if bad_flds:
-            msg.append("\nGOEA RESULT FIELDS: {}".format(" ".join(self._fldsdefprt)))
-            msg.append("GO FIELDS: {}".format(" ".join(self.goterm.__dict__.keys())))
+            msg.append("\nGOEA RESULT FIELDS: {}".format(
+                " ".join(self._fldsdefprt)))
+            msg.append("GO FIELDS: {}".format(
+                " ".join(self.goterm.__dict__.keys())))
             msg.append("\nFATAL: {N} UNEXPECTED FIELDS({F})\n".format(
                 N=len(bad_flds), F=" ".join(bad_flds)))
             msg.append("  {N} User-provided fields:".format(N=len(fldnames)))
@@ -250,11 +259,12 @@ class GOEnrichmentStudy(object):
 
     def __init__(self, pop, assoc, obo_dag, propagate_counts=True, alpha=.05, methods=None, **kws):
         self.name = kws.get('name', 'GOEA')
-        print('\nLoad {OBJNAME} Gene Ontology Analysis ...'.format(OBJNAME=self.name))
+        print('\nLoad {OBJNAME} Gene Ontology Analysis ...'.format(
+            OBJNAME=self.name))
         self.log = kws['log'] if 'log' in kws else sys.stdout
         self._run_multitest = {
-            'local':lambda iargs: self._run_multitest_local(iargs),
-            'statsmodels':lambda iargs: self._run_multitest_statsmodels(iargs)}
+            'local': lambda iargs: self._run_multitest_local(iargs),
+            'statsmodels': lambda iargs: self._run_multitest_statsmodels(iargs)}
         self.pop = set(pop)
         self.pop_n = len(pop)
         self.assoc = assoc
@@ -268,7 +278,8 @@ class GOEnrichmentStudy(object):
         if propagate_counts:
             sys.stderr.write("Propagating term counts to parents ..\n")
             obo_dag.update_association(assoc)
-        self.go2popitems = get_terms("population", pop, assoc, obo_dag, self.log)
+        self.go2popitems = get_terms(
+            "population", pop, assoc, obo_dag, self.log)
 
     # def get_objresults(self, name, study, **kws):
     #     """Run GOEA, return results in an object"""
@@ -278,9 +289,11 @@ class GOEnrichmentStudy(object):
 
     def run_study(self, study, **kws):
         """Run Gene Ontology Enrichment Study (GOEA) on study ids."""
+
         study_name = kws.get('name', 'current')
-        print('\nRun {OBJNAME} Gene Ontology Analysis: {STU} study set of {N} IDs ...'.format(
-            OBJNAME=self.name, N=len(study), STU=study_name))
+        if kws.get('quiet'):
+            print('\nRun {OBJNAME} Gene Ontology Analysis: {STU} study set of {N} IDs ...'.format(
+                OBJNAME=self.name, N=len(study), STU=study_name))
         if not study:
             return []
         # Key-word arguments:
@@ -293,7 +306,8 @@ class GOEnrichmentStudy(object):
             return []
 
         if log is not None:
-            log.write("  {MSG}\n".format(MSG="\n  ".join(self.get_results_msg(results, study))))
+            log.write("  {MSG}\n".format(MSG="\n  ".join(
+                self.get_results_msg(results, study))))
 
         # Do multipletest corrections on uncorrected pvalues and update results
         self._run_multitest_corr(results, methods, alpha, study, log)
@@ -311,7 +325,7 @@ class GOEnrichmentStudy(object):
 
         # Default sort order:
         results.sort(key=lambda r: [r.enrichment, r.NS, r.p_uncorrected])
-        return results # list of GOEnrichmentRecord objects
+        return results  # list of GOEnrichmentRecord objects
 
     def run_study_nts(self, study, **kws):
         """Run GOEA on study ids. Return results as a list of namedtuples."""
@@ -326,8 +340,10 @@ class GOEnrichmentStudy(object):
             fmt = "{M:6,} GO terms are associated with {N:6,} of {NT:6,}"
             stu_items, num_gos_stu = self.get_item_cnt(results, "study_items")
             pop_items, num_gos_pop = self.get_item_cnt(results, "pop_items")
-            stu_txt = fmt.format(N=len(stu_items), M=num_gos_stu, NT=len(set(study)))
-            pop_txt = fmt.format(N=len(pop_items), M=num_gos_pop, NT=self.pop_n)
+            stu_txt = fmt.format(
+                N=len(stu_items), M=num_gos_stu, NT=len(set(study)))
+            pop_txt = fmt.format(
+                N=len(pop_items), M=num_gos_pop, NT=self.pop_n)
             msg.append("{POP} population items".format(POP=pop_txt))
             msg.append("{STU} study items".format(STU=stu_txt))
         return msg
@@ -337,7 +353,8 @@ class GOEnrichmentStudy(object):
         results = []
         study_in_pop = self.pop.intersection(study)
         # " 99%    378 of    382 study items found in population"
-        go2studyitems = get_terms("study", study_in_pop, self.assoc, self.obo_dag, log)
+        go2studyitems = get_terms(
+            "study", study_in_pop, self.assoc, self.obo_dag, log)
         pop_n, study_n = self.pop_n, len(study_in_pop)
         allterms = set(go2studyitems).union(set(self.go2popitems))
         if log is not None:
@@ -362,7 +379,8 @@ class GOEnrichmentStudy(object):
 
             one_record = GOEnrichmentRecord(
                 goid,
-                p_uncorrected=calc_pvalue(study_count, study_n, pop_count, pop_n),
+                p_uncorrected=calc_pvalue(
+                    study_count, study_n, pop_count, pop_n),
                 study_items=study_items,
                 pop_items=pop_items,
                 ratio_in_study=(study_count, study_n),
@@ -386,15 +404,18 @@ class GOEnrichmentStudy(object):
     def _log_multitest_corr(self, log, results, ntmt, alpha):
         """Print information regarding multitest correction results."""
         ntm = ntmt.nt_method
-        attr_mult = "p_{M}".format(M=self.methods.get_fieldname(ntm.source, ntm.method))
+        attr_mult = "p_{M}".format(
+            M=self.methods.get_fieldname(ntm.source, ntm.method))
         eps = [r for r in results if getattr(r, attr_mult) < alpha]
         sig_cnt = len(eps)
         ctr = cx.Counter([r.enrichment for r in eps])
         log.write('  METHOD {M}:\n'.format(M=ntm.method))
         log.write("{N:8,} GO terms found significant (< {A}=alpha) ".format(
             N=sig_cnt, A=alpha))
-        log.write('({E:3} enriched + {P:3} purified): '.format(E=ctr['e'], P=ctr['p']))
-        log.write("{MSRC} {METHOD}\n".format(MSRC=ntm.source, METHOD=ntm.method))
+        log.write(
+            '({E:3} enriched + {P:3} purified): '.format(E=ctr['e'], P=ctr['p']))
+        log.write("{MSRC} {METHOD}\n".format(
+            MSRC=ntm.source, METHOD=ntm.method))
         log.write("{N:8,} study items associated with significant GO IDs (enriched)\n".format(
             N=len(self.get_study_items(r for r in eps if r.enrichment == 'e'))))
         log.write("{N:8,} study items associated with significant GO IDs (purified)\n".format(
@@ -413,7 +434,8 @@ class GOEnrichmentStudy(object):
         # Only load statsmodels if it is used
         multipletests = self.methods.get_statsmodels_multipletests()
         results = multipletests(ntmt.pvals, ntmt.alpha, ntmt.nt_method.method)
-        pvals_corrected = results[1] # reject_lst, pvals_corrected, alphacSidak, alphacBonf
+        # reject_lst, pvals_corrected, alphacSidak, alphacBonf
+        pvals_corrected = results[1]
         self._update_pvalcorr(ntmt, pvals_corrected)
 
     def _run_multitest_local(self, ntmt):
@@ -421,11 +443,13 @@ class GOEnrichmentStudy(object):
         corrected_pvals = None
         method = ntmt.nt_method.method
         if method == "bonferroni":
-            corrected_pvals = Bonferroni(ntmt.pvals, ntmt.alpha).corrected_pvals
+            corrected_pvals = Bonferroni(
+                ntmt.pvals, ntmt.alpha).corrected_pvals
         elif method == "sidak":
             corrected_pvals = Sidak(ntmt.pvals, ntmt.alpha).corrected_pvals
         elif method == "holm":
-            corrected_pvals = HolmBonferroni(ntmt.pvals, ntmt.alpha).corrected_pvals
+            corrected_pvals = HolmBonferroni(
+                ntmt.pvals, ntmt.alpha).corrected_pvals
         elif method == "fdr":
             # get the empirical p-value distributions for FDR
             term_pop = getattr(self, 'term_pop', None)
@@ -452,7 +476,8 @@ class GOEnrichmentStudy(object):
     def wr_txt(self, fout_txt, goea_results, prtfmt=None, **kws):
         """Print GOEA results to text file."""
         if not goea_results:
-            sys.stdout.write("      0 GOEA results. NOT WRITING {FOUT}\n".format(FOUT=fout_txt))
+            sys.stdout.write(
+                "      0 GOEA results. NOT WRITING {FOUT}\n".format(FOUT=fout_txt))
             return
         with open(fout_txt, 'w') as prt:
             if 'title' in kws:
@@ -482,21 +507,25 @@ class GOEnrichmentStudy(object):
         """Write a xlsx file."""
         # kws: prt_if indent itemid2name(study_items)
         objprt = PrtFmt()
-        prt_flds = kws.get('prt_flds', self.objprtres.get_prtflds_default(goea_results))
+        prt_flds = kws.get(
+            'prt_flds', self.objprtres.get_prtflds_default(goea_results))
         xlsx_data = MgrNtGOEAs(goea_results).get_goea_nts_prt(prt_flds, **kws)
         if 'fld2col_widths' not in kws:
-            kws['fld2col_widths'] = {f:objprt.default_fld2col_widths.get(f, 8) for f in prt_flds}
+            kws['fld2col_widths'] = {
+                f: objprt.default_fld2col_widths.get(f, 8) for f in prt_flds}
         RPT.wr_xlsx(fout_xlsx, xlsx_data, **kws)
 
     def wr_tsv(self, fout_tsv, goea_results, **kws):
         """Write tab-separated table data to file"""
-        prt_flds = kws.get('prt_flds', self.objprtres.get_prtflds_default(goea_results))
+        prt_flds = kws.get(
+            'prt_flds', self.objprtres.get_prtflds_default(goea_results))
         tsv_data = MgrNtGOEAs(goea_results).get_goea_nts_prt(prt_flds, **kws)
         RPT.wr_tsv(fout_tsv, tsv_data, **kws)
 
     def prt_tsv(self, prt, goea_results, **kws):
         """Write tab-separated table data"""
-        prt_flds = kws.get('prt_flds', self.objprtres.get_prtflds_default(goea_results))
+        prt_flds = kws.get(
+            'prt_flds', self.objprtres.get_prtflds_default(goea_results))
         tsv_data = MgrNtGOEAs(goea_results).get_goea_nts_prt(prt_flds, **kws)
         RPT.prt_tsv(prt, tsv_data, **kws)
 
@@ -536,7 +565,8 @@ class GOEnrichmentStudy(object):
                 # Exclude some attributes from the namedtuple when saving results
                 # to a Python file because the information is redundant or verbose.
                 nts_goea = MgrNtGOEAs(goea_results).get_goea_nts_prt(**kws)
-            docstring = "\n".join([docstring, "# {VER}\n\n".format(VER=self.obo_dag.version)])
+            docstring = "\n".join(
+                [docstring, "# {VER}\n\n".format(VER=self.obo_dag.version)])
             assert hasattr(nts_goea[0], '_fields')
             if sortby is None:
                 sortby = MgrNtGOEAs.dflt_sortby_objgoea
